@@ -15,6 +15,14 @@ class ViewController: UIViewController {
     var thirdContainer: UIView!
     var fourthContainer: UIView!
     
+    // Slots array
+    var slots: [[Slot]] = []
+    
+    // Stats
+    var credits = 0
+    var currentBet = 0
+    var winnings = 0
+    
     // User buttons
     var resetButton: UIButton!
     var betOneButton: UIButton!
@@ -43,9 +51,9 @@ class ViewController: UIViewController {
         // Do any additional setup after loading the view, typically from a nib.
         self.setupContainerViews()
         self.setupFirstContainer(self.firstContainer)
-        self.setupSecondContainer(self.secondContainer)
         self.setupThirdContainer(self.thirdContainer)
         self.setupFourthContainer(self.fourthContainer)
+        self.hardReset()
     }
 
     override func didReceiveMemoryWarning() {
@@ -103,20 +111,33 @@ class ViewController: UIViewController {
     func setupSecondContainer(containerView: UIView) {
         for var containerNumber = 0; containerNumber < kNumberOfContainers; ++containerNumber {
             for var slotNumber = 0; slotNumber < kNumberOfSlots; ++slotNumber {
+                var slot: Slot
                 var slotImageView = UIImageView()
+                
+                if self.slots.count != 0 {
+                    let slotContainer = slots[containerNumber]
+                    slot = slotContainer[slotNumber]
+                    slotImageView.image = slot.image
+                }
+                else {
+                    slotImageView.image = UIImage(named: "Ace")
+                }
+                
                 slotImageView.backgroundColor = UIColor.yellowColor()
                 slotImageView.frame = CGRect(
                     x: containerView.bounds.origin.x + kMarginForSlot + (containerView.bounds.size.width * CGFloat(containerNumber) * kThird),
                     y: containerView.bounds.origin.y + kMarginForSlot + (containerView.bounds.size.height * CGFloat(slotNumber) * kThird),
                     width: containerView.bounds.width * kThird - (kMarginForSlot * 2),
                     height: containerView.bounds.height * kThird - (kMarginForSlot * 2))
-                var quardinateLabel = UILabel()
-                quardinateLabel.text = "(\(slotNumber),\(containerNumber))"
-                quardinateLabel.textColor = UIColor.blackColor()
-                quardinateLabel.sizeToFit()
-                quardinateLabel.center = CGPointMake(slotImageView.frame.width / 2, slotImageView.frame.height / 2)
-                slotImageView.addSubview(quardinateLabel)
                 containerView.addSubview(slotImageView)
+                
+                /* var quardinateLabel = UILabel()
+                * quardinateLabel.text = "(\(slotNumber),\(containerNumber))"
+                * quardinateLabel.textColor = UIColor.blackColor()
+                * quardinateLabel.sizeToFit()
+                * quardinateLabel.center = CGPointMake(slotImageView.frame.width / 2, slotImageView.frame.height / 2)
+                * slotImageView.addSubview(quardinateLabel)
+                */
             }
         }
     }
@@ -230,11 +251,37 @@ class ViewController: UIViewController {
     }
     
     func resetButtonPressed(button: UIButton) {
-        println("resetButtonPressed")
+        self.hardReset()
+    }
+    
+    // Reset the game
+    func hardReset() {
+        removeSlotImageViews()
+        slots.removeAll(keepCapacity: true)
+        setupSecondContainer(self.secondContainer)
+        credits = 5
+        winnings = 0
+        currentBet = 0
+        
+        if self.thirdContainer != nil {
+            self.updateMainView()
+        }
     }
     
     func betOneButtonPressed(button: UIButton) {
-        println(button)
+        if credits <= 0 && currentBet <= 0 {
+            showAlertWithText(header: "No More Credits", message: "Reset Game")
+        }
+        else {
+            if currentBet < 5 {
+                currentBet++
+                credits--
+                updateMainView()
+            }
+            else {
+                showAlertWithText(message: "You can only bet 5 credits at a time!")
+            }
+        }
     }
     
     func betMaxButtonPressed(button: UIButton) {
@@ -242,7 +289,34 @@ class ViewController: UIViewController {
     }
     
     func spinButtonPressed(button: UIButton) {
-        // implementation
+        removeSlotImageViews()
+        slots = Factory.createSlots()
+        setupSecondContainer(self.secondContainer)
+    }
+    
+    // Remove the current slots from the slot machine
+    func removeSlotImageViews() {
+        if self.secondContainer != nil {
+            let container: UIView? = self.secondContainer
+            let subViews:Array? = container!.subviews
+            for view in subViews! {
+                view.removeFromSuperview()
+            }
+        }
+    }
+    
+    // Update labels in third container
+    func updateMainView() {
+        self.creditsLabel.text = "\(self.credits)"
+        self.betLabel.text = "\(self.currentBet)"
+        self.winnerPaidLabel.text = "\(self.winnings)"
+    }
+    
+    // Show an alertView
+    func showAlertWithText(header: String = "Warning", message: String) {
+        var alert = UIAlertController(title: header, message: message, preferredStyle: UIAlertControllerStyle.Alert)
+        alert.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.Default, handler: nil))
+        self.presentViewController(alert, animated: true, completion: nil)
     }
 }
 
