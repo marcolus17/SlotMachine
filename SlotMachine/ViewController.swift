@@ -230,7 +230,7 @@ class ViewController: UIViewController {
         // Bet Max button
         self.betMaxButton = UIButton()
         self.betMaxButton.setTitle("Bet Max", forState: UIControlState.Normal)
-        self.betMaxButton.setTitleColor(UIColor.redColor(), forState: UIControlState.Normal)
+        self.betMaxButton.setTitleColor(UIColor.blueColor(), forState: UIControlState.Normal)
         self.betMaxButton.titleLabel?.font = UIFont(name: "Superclarendon-Bold", size: 12)
         self.betMaxButton.backgroundColor = UIColor.redColor()
         self.betMaxButton.sizeToFit()
@@ -259,7 +259,7 @@ class ViewController: UIViewController {
         removeSlotImageViews()
         slots.removeAll(keepCapacity: true)
         setupSecondContainer(self.secondContainer)
-        credits = 5
+        credits = 25
         winnings = 0
         currentBet = 0
         
@@ -268,6 +268,7 @@ class ViewController: UIViewController {
         }
     }
     
+    // Bet one credit
     func betOneButtonPressed(button: UIButton) {
         if credits <= 0 && currentBet <= 0 {
             showAlertWithText(header: "No More Credits", message: "Reset Game")
@@ -284,14 +285,35 @@ class ViewController: UIViewController {
         }
     }
     
+    // Bet the max amount (5 credits)
     func betMaxButtonPressed(button: UIButton) {
-        // implementation
+        if credits < 5 {
+            showAlertWithText(header: "Not Enough Credits", message: "Bet Less")
+        }
+        else {
+            if currentBet < 5 {
+                var creditsToBetMax = 5 - currentBet
+                credits -= creditsToBetMax
+                currentBet += creditsToBetMax
+                updateMainView()
+            }
+            else {
+                showAlertWithText(message: "You can only bet 5 credits at a time!")
+            }
+        }
     }
     
+    // Spin the slot machine
     func spinButtonPressed(button: UIButton) {
         removeSlotImageViews()
         slots = Factory.createSlots()
         setupSecondContainer(self.secondContainer)
+        
+        var winningsMultiplier = SlotBrain.computeWinnings(slots)
+        winnings = winningsMultiplier * currentBet
+        credits += winnings
+        currentBet = 0
+        updateMainView()
     }
     
     // Remove the current slots from the slot machine
